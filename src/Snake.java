@@ -15,14 +15,6 @@ class Snake
         this.movementsNumber = 0;
     }
 
-    public Snake(Snake originalSnake)
-    {
-        this.positions = originalSnake.positions;
-        this.lengthX = originalSnake.lengthX;
-        this.lengthY = originalSnake.lengthY;
-        this.movementsNumber = originalSnake.movementsNumber;
-    }
-
     public void addPosition(Integer x, Integer y)
     {
         positions.add(new Position(x,y));
@@ -66,7 +58,7 @@ class Snake
             if(xMovement > 0)
             {
                 // Moves to the right
-                if( head.x != lengthX )
+                if( head.x != lengthX - 1 )
                 {
                     head.x = head.x + xMovement; 
                 }
@@ -93,9 +85,9 @@ class Snake
             if(yMovement > 0)
             {
                 // Moves upwards
-                if( head.y != lengthY )
+                if( head.y != lengthY - 1 )
                 {
-                    head.y = head.y + xMovement; 
+                    head.y = head.y + yMovement; 
                 }
                 else
                 {
@@ -116,12 +108,33 @@ class Snake
                     return false;
                 }
             }
-    
-            positions.add(0, head);
+
             positions.remove(positions.size()-1);
-            movementsNumber++;
-            return true;
+            if(collisionWithItself(head))
+            {
+                return false;
+            }
+            else
+            {
+                positions.add(0, head);
+                
+                movementsNumber++;
+                return true;
+            }
         }
+    }
+
+    private Boolean collisionWithItself(Position newHead)
+    {
+        for(Position currentPosition : positions)
+        {
+            if(currentPosition.x == newHead.x && currentPosition.y == newHead.y)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Integer checkOptions(Integer depth) throws Snake.SnakeException
@@ -135,7 +148,11 @@ class Snake
             {
                 nextSnakes.addAll(checkSnakeMoves(currentSnake));
             }
-            alternativeSnakes = nextSnakes;
+            alternativeSnakes.clear();
+            for(Snake snakeToCopy : nextSnakes)
+            {
+                alternativeSnakes.add(duplicateSnake(snakeToCopy));
+            }
             halt = alternativeSnakes.get(0).checkEnding(depth);
         }while(halt != true);
 
@@ -144,34 +161,45 @@ class Snake
 
     private ArrayList<Snake> checkSnakeMoves (Snake snake) throws Snake.SnakeException
     {
+
         ArrayList<Snake> possibleSnakes = new ArrayList<Snake>();
-        Snake snakeLeft = new Snake(snake);
+        Snake snakeLeft = duplicateSnake(snake);
+        Snake snakeRight = duplicateSnake(snake);
+        Snake snakeUp = duplicateSnake(snake);
+        Snake snakeDown = duplicateSnake(snake);
         if(snakeLeft.moveLeft())
         {
             possibleSnakes.add(snakeLeft);
         }
-        Snake snakeRight = new Snake(snake);
         if(snakeRight.moveRight())
         {
             possibleSnakes.add(snakeRight);
         }
-        Snake snakeUp = new Snake(snake);
         if(snakeUp.moveUp())
         {
             possibleSnakes.add(snakeUp);
         }
-        Snake snakeDown = new Snake(snake);
-        if(snakeDown.moveLeft())
+        if(snakeDown.moveDown())
         {
             possibleSnakes.add(snakeDown);
         }
         return possibleSnakes;
     }
 
+    private Snake duplicateSnake(Snake snake)
+    {
+        Snake copiedSnake = new Snake(snake.lengthX, snake.lengthY);
+        for(Integer i=0;i<snake.positions.size();i++)
+        {
+            copiedSnake.positions.add(new Position(snake.positions.get(i).x, snake.positions.get(i).y));
+        }
+        copiedSnake.movementsNumber = snake.movementsNumber;
+        return copiedSnake;
+    }
+
     private Boolean checkEnding(Integer depth)
     {
-        // All of the snakes are supposed to have moved the same amount of times, if the depth is 3, the value of movementsNumber will be 2 [0->1->2].
-        return movementsNumber == depth-1;
+        return movementsNumber == depth;
     }
 
     private class SnakeException extends Exception
