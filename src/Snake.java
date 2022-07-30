@@ -1,16 +1,26 @@
-import java.util.List;
 import java.util.ArrayList;
+
 class Snake
 {
     public ArrayList<Position> positions;
     private Integer lengthX;
     private Integer lengthY;
+    private Integer movementsNumber;
     
     public Snake(Integer lengthX, Integer lengthY)
     {
         this.positions = new ArrayList<Position>();
         this.lengthX = lengthX;
         this.lengthY = lengthY;
+        this.movementsNumber = 0;
+    }
+
+    public Snake(Snake originalSnake)
+    {
+        this.positions = originalSnake.positions;
+        this.lengthX = originalSnake.lengthX;
+        this.lengthY = originalSnake.lengthY;
+        this.movementsNumber = originalSnake.movementsNumber;
     }
 
     public void addPosition(Integer x, Integer y)
@@ -109,11 +119,62 @@ class Snake
     
             positions.add(0, head);
             positions.remove(positions.size()-1);
+            movementsNumber++;
             return true;
         }
     }
 
-    public class SnakeException extends Exception
+    public Integer checkOptions(Integer depth) throws Snake.SnakeException
+    {
+        Boolean halt = false;
+        ArrayList<Snake> alternativeSnakes = checkSnakeMoves(this);
+        do
+        {
+            ArrayList<Snake> nextSnakes = new ArrayList<Snake>();
+            for(Snake currentSnake : alternativeSnakes)
+            {
+                nextSnakes.addAll(checkSnakeMoves(currentSnake));
+            }
+            alternativeSnakes = nextSnakes;
+            halt = alternativeSnakes.get(0).checkEnding(depth);
+        }while(halt != true);
+
+        return alternativeSnakes.size();
+    }
+
+    private ArrayList<Snake> checkSnakeMoves (Snake snake) throws Snake.SnakeException
+    {
+        ArrayList<Snake> possibleSnakes = new ArrayList<Snake>();
+        Snake snakeLeft = new Snake(snake);
+        if(snakeLeft.moveLeft())
+        {
+            possibleSnakes.add(snakeLeft);
+        }
+        Snake snakeRight = new Snake(snake);
+        if(snakeRight.moveRight())
+        {
+            possibleSnakes.add(snakeRight);
+        }
+        Snake snakeUp = new Snake(snake);
+        if(snakeUp.moveUp())
+        {
+            possibleSnakes.add(snakeUp);
+        }
+        Snake snakeDown = new Snake(snake);
+        if(snakeDown.moveLeft())
+        {
+            possibleSnakes.add(snakeDown);
+        }
+        return possibleSnakes;
+    }
+
+    private Boolean checkEnding(Integer depth)
+    {
+        // All of the snakes are supposed to have moved the same amount of times, if the depth is 3, the value of movementsNumber will be 2 [0->1->2].
+        return movementsNumber == depth-1;
+    }
+
+    private class SnakeException extends Exception
     {
         public SnakeException (String errorMessage)
         {
