@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 public class Parser {
 
     public static Position parsePairOfNumbers(String param)
